@@ -23,7 +23,7 @@ interface RegisterUserInput {
     password: string
 }
 
-export default function SignUpPage() {
+export default function RegisterPage() {
     const [loading, setLoading] = useState(false)
 
     const {register, handleSubmit} = useForm<RegisterUserInput>()
@@ -33,7 +33,7 @@ export default function SignUpPage() {
     const onUserCreate = async (values: RegisterUserInput) => {
         setLoading(true)
         try {
-            const response = await axios.post(ROUTES.USER.SIGNUP, values)
+            const response = await axios.post(ROUTES.USER.REGISTER, values)
             const data = await response.data
 
             if(!data?.success){

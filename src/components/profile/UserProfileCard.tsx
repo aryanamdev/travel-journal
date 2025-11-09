@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Mail, CheckCircle2, Archive, ShoppingBag, LogOut, MoreHorizontal } from "lucide-react";
 
-type Viewer = {
+type Me = {
   id?: string;
   fullName: string;
   email: string;
@@ -22,8 +22,8 @@ type Viewer = {
 };
 
 type Props = {
-  user: Viewer;
-  onSave?: (user: Viewer) => void;
+  user: Me;
+  onSave?: (user: Me) => void;
   onLogout?: (onLoading :(loading: boolean) => void) => void ;
   onArchive?: () => void;
   className?: string;
@@ -32,10 +32,10 @@ type Props = {
 const ViewerProfileCard: React.FC<Props> = ({ user, onSave, onLogout, onArchive, className = "" }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false)
-  const [form, setForm] = useState<Viewer>({ ...user });
+  const [form, setForm] = useState<Me>({ ...user });
   const toggleEdit = () => setIsEditing((s) => !s);
 
-  const handleChange = (k: keyof Viewer, v: any) => setForm((s) => ({ ...s, [k]: v }));
+  const handleChange = (k: keyof Me, v: any) => setForm((s) => ({ ...s, [k]: v }));
   const handleSave = () => {
     onSave?.(form);
     setIsEditing(false);
@@ -66,7 +66,7 @@ const ViewerProfileCard: React.FC<Props> = ({ user, onSave, onLogout, onArchive,
                 <div className="flex items-center gap-2">
                   <CardTitle className="text-lg leading-tight">{user.fullName}</CardTitle>
                   <Badge variant="secondary" className="text-xs">
-                    Viewer
+                    Me
                   </Badge>
                 </div>
                 <CardDescription className="text-sm text-muted-foreground">{user.email}</CardDescription>

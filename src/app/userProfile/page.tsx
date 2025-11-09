@@ -9,7 +9,7 @@ import { ROUTES } from '../constants/routes'
 import { useRouter } from 'next/navigation'
 
 const UserProfile = () => {
-  const [viewer, setViewer] = useState<User | null>(null)
+  const [me, setViewer] = useState<User | null>(null)
 
   const router = useRouter()
 
@@ -22,9 +22,9 @@ const UserProfile = () => {
         throw new Error("Error fetching the user")
       }
 
-      const viewer = data?.data 
+      const me = data?.data 
 
-      setViewer(viewer)
+      setViewer(me)
 
     } catch (error: any) {
       toast.error(error.message || "Error fetching user")
@@ -60,7 +60,7 @@ const UserProfile = () => {
   }, [])
 
   const user = {
-    email: viewer?.email || "", fullName: viewer?.fullName || ""
+    email: me?.email || "", fullName: me?.fullName || ""
   }
 
   return (
