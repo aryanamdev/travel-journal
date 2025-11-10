@@ -6,12 +6,19 @@ import { NotFoundError, UnauthorizedError, BadRequestError, ForbiddenError } fro
 import { RegisterDTO, LoginDTO, VerifyDTO, ViewerDTO } from "@/schemas/auth";
 import { User as UserType, UserTokenData } from "@/types/user";
 import { sendEmail } from "@/helpers/verifyEmail";
+import { connect } from "@/dbConfig/dbConfig";
 
-const JWT_SECRET = process.env.TOKEN_SECRET;
-if (!JWT_SECRET) throw new Error("TOKEN_SECRET is not defined");
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) throw new Error("JWT_SECRET is not defined");
 
 const COOKIE_NAME = "token";
-const COOKIE_MAX_AGE = 60 * 60 * 24; // 1 day in seconds
+const COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 1 day in seconds
+
+
+/**
+ * connecting to the db
+ */
+connect()
 
 export const authService = {
   async register(payload: RegisterDTO) {
@@ -43,7 +50,7 @@ export const authService = {
 
   async login(payload: LoginDTO) {
     const { email, password } = payload;
-    const user = await User.findOne({ email }).exec();
+    const user = await User.findOne({ email });
     if (!user) throw new NotFoundError("User does not exist with this email");
 
     const match = await bcrypt.compare(password, user.password);
