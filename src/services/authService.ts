@@ -8,8 +8,7 @@ import { User as UserType, UserTokenData } from "@/types/user";
 import { sendEmail } from "@/helpers/verifyEmail";
 import { connect } from "@/dbConfig/dbConfig";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) throw new Error("JWT_SECRET is not defined");
+const JWT_SECRET = String(process.env.JWT_SECRET) || "";
 
 const COOKIE_NAME = "token";
 const COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 1 day in seconds
