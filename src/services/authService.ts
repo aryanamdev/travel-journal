@@ -13,12 +13,6 @@ const JWT_SECRET = String(process.env.JWT_SECRET) || "";
 const COOKIE_NAME = "token";
 const COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 1 day in seconds
 
-
-/**
- * connecting to the db
- */
-connect()
-
 export const authService = {
   async register(payload: RegisterDTO) {
     const { email, password, fullName } = payload;

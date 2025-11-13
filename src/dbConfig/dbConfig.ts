@@ -20,3 +20,6 @@ export async function connect(){
         console.error(`Something went wrong while connecting to the database, error: ${error}`)
     }
 }
+
+
+connect()
