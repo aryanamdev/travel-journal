@@ -13,5 +13,6 @@ export {
     createJournalController as POST,  
     deleteJournalController as DELETE, 
     updateJournalController as PATCH, 
-    getJournalsController as GET};
+    getJournalsController as GET
+};
 
