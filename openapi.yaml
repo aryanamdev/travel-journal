@@ -1,0 +1,712 @@
+openapi: 3.0.3
+info:
+  title: Travel Journal API
+  version: "1.0.0"
+  description: |
+    OpenAPI 3.0 specification for the Travel Journal backend, built with Next.js app router.
+
+servers:
+  - url: /api/v2
+    description: Base path for API version 2
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+          nullable: true
+        data: {}
+        errors: {}
+
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: User ID
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+      required:
+        - _id
+        - fullName
+        - email
+
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        fullName:
+          type: string
+          minLength: 2
+        password:
+          type: string
+          minLength: 8
+      required:
+        - email
+        - fullName
+        - password
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+      required:
+        - email
+        - password
+
+    VerifyEmailRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          minLength: 10
+      required:
+        - token
+
+    GeoPoint:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [Point]
+        coordinates:
+          type: array
+          items:
+            type: number
+          minItems: 2
+          maxItems: 2
+      required:
+        - type
+        - coordinates
+
+    ImageMeta:
+      type: object
+      properties:
+        url:
+          type: string
+        public_id:
+          type: string
+        width:
+          type: number
+        height:
+          type: number
+        caption:
+          type: string
+      required:
+        - url
+
+    Entry:
+      type: object
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        journalId:
+          type: string
+        authorId:
+          type: string
+        content:
+          type: string
+        mood:
+          type: string
+        weather:
+          type: string
+        location:
+          $ref: '#/components/schemas/GeoPoint'
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageMeta'
+        isPublic:
+          type: boolean
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - _id
+        - title
+        - journalId
+        - authorId
+        - content
+
+    CreateEntryRequest:
+      type: object
+      description: Matches CreateEntrySchema (note that authorId is ignored server-side and derived from the authenticated user).
+      properties:
+        title:
+          type: string
+        journalId:
+          type: string
+        authorId:
+          type: string
+        content:
+          type: string
+          default: ""
+        mood:
+          type: string
+        weather:
+          type: string
+        location:
+          $ref: '#/components/schemas/GeoPoint'
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageMeta'
+        isPublic:
+          type: boolean
+          default: false
+        tags:
+          type: array
+          items:
+            type: string
+      required:
+        - title
+        - journalId
+        - authorId
+
+    UpdateEntryRequest:
+      allOf:
+        - $ref: '#/components/schemas/CreateEntryRequest'
+      description: Partial update of an entry; all fields optional.
+
+    Journal:
+      type: object
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+        coverImage:
+          type: string
+          format: uri
+        isShared:
+          type: boolean
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - _id
+        - title
+        - createdBy
+
+    CreateJournalRequest:
+      type: object
+      description: Matches CreateJournalSchema (createdBy/ids and timestamps are derived server-side).
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+        coverImage:
+          type: string
+          format: uri
+        isShared:
+          type: boolean
+      required:
+        - title
+
+paths:
+  /users/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Server error
+
+  /users/login:
+    post:
+      tags: [Auth]
+      summary: Log in a user
+      description: On success, sets an HTTP-only `token` cookie and returns the user object.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          headers:
+            Set-Cookie:
+              description: HTTP-only session token cookie.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '400':
+          description: Validation or authentication error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Server error
+
+  /users/logout:
+    get:
+      tags: [Auth]
+      summary: Log out the current user
+      description: Clears the `token` cookie if present and always returns a successful response.
+      responses:
+        '200':
+          description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Server error
+
+  /users/verifyEmail:
+    post:
+      tags: [Auth]
+      summary: Verify a user's email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyEmailRequest'
+      responses:
+        '200':
+          description: Email verified or already verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Invalid or expired verification token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Server error
+
+  /users/me:
+    get:
+      tags: [Auth]
+      summary: Get the currently authenticated user
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Server error
+
+  /entries:
+    get:
+      tags: [Entries]
+      summary: List entries for the authenticated user
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: journalId
+          schema:
+            type: string
+          required: false
+          description: If provided, filter entries by journal ID.
+      responses:
+        '200':
+          description: Entries fetched
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Entry'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Server error
+
+    post:
+      tags: [Entries]
+      summary: Create a new entry
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEntryRequest'
+      responses:
+        '201':
+          description: Entry created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Entry'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Server error
+
+  /entries/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        description: Entry ID
+    get:
+      tags: [Entries]
+      summary: Get a single entry by ID
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Entry fetched
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Entry'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Entry not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Server error
+
+    patch:
+      tags: [Entries]
+      summary: Update an existing entry
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEntryRequest'
+      responses:
+        '200':
+          description: Entry updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Entry'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Entry not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Server error
+
+    delete:
+      tags: [Entries]
+      summary: Delete an entry
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Entry deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Entry not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Server error
+
+  /journal:
+    get:
+      tags: [Journals]
+      summary: List journals for the authenticated user
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Journals fetched
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Journal'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Server error
+
+    post:
+      tags: [Journals]
+      summary: Create a new journal
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJournalRequest'
+      responses:
+        '201':
+          description: Journal created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Journal'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Server error
+
+  /journal/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        description: Journal ID
+    patch:
+      tags: [Journals]
+      summary: Update a journal
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJournalRequest'
+      responses:
+        '200':
+          description: Journal updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Journal'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Journal not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Server error
+
+    delete:
+      tags: [Journals]
+      summary: Delete a journal
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Journal deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Journal not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Server error
