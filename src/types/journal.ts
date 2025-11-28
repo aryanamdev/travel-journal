@@ -20,7 +20,7 @@ export type Journal = Omit<IJournal, "_id" | "createdBy"> & {
 };
 
 // Type for creating a new journal (omits auto-generated fields)
-export type CreateJournalInput = Omit<IJournal, "_id" | "createdAt" | "updatedAt">;
+export type CreateJournalInput = Omit<IJournal, "_id" | "createdAt" | "updatedAt" | "createdBy">;
 
 // Type for updating a journal (all fields optional)
 export type UpdateJournalInput = Partial<CreateJournalInput>;

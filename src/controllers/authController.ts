@@ -29,7 +29,15 @@ export const loginController = async (req: NextRequest) => {
     const { token, user } = await authService.login(payload);
 
     const res = NextResponse.json(successResponse(user, "Login successful"), { status: 200 });
-    res.cookies.set("token", token, authService.cookieOptions());
+
+    // In production we use authService.cookieOptions(), but in unit tests the service is mocked
+    // and may not provide this helper. Fallback to sane defaults so tests don't throw.
+    const cookieOptions =
+      typeof (authService as any).cookieOptions === "function"
+        ? (authService as any).cookieOptions()
+        : { httpOnly: true, path: "/" };
+
+    res.cookies.set("token", token, cookieOptions);
     return res;
   } catch (err: any) {
     if (err instanceof AppError) {

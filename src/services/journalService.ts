@@ -1,17 +1,19 @@
 // src/services/journalService.ts
 
 import Journal from "@/models/journalModel";
-import { JournalDTO } from "@/schemas/journal";
+import { CreateJournalDTO, JournalDTO } from "@/schemas/journal";
 import { AppError } from "@/lib/errors";
 
 export const journalService = {
-  async create(userId: string, data: JournalDTO) {
-    const journal = await Journal.create({ ...data, user: userId });
+  async create(userId: string, data: CreateJournalDTO) {
+    const journal = await Journal.create({ ...data, createdBy: userId });
     return journal.toObject();
   },
 
   async getAll(userId: string) {
-    const journals = await Journal.find({ user: userId }).lean();
+    console.log({userId})
+
+    const journals = await Journal.find({ createdBy: userId }).lean();
     return journals;
   },
 
@@ -23,7 +25,7 @@ export const journalService = {
 
   async update(id: string, userId: string, data: Partial<JournalDTO>) {
     const updatedJournal = await Journal.findOneAndUpdate(
-      { _id: id, user: userId },
+      { _id: id, createdBy: userId },
       data,
       { new: true, runValidators: true, lean: true }
     );
@@ -34,7 +36,7 @@ export const journalService = {
   },
 
   async remove(id: string, userId: string) {
-    const deleted = await Journal.findOneAndDelete({ _id: id, user: userId }).lean();
+    const deleted = await Journal.findOneAndDelete({ _id: id, createdBy: userId }).lean();
 
     if (!deleted) throw new AppError("Journal not found", 404);
 

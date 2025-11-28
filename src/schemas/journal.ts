@@ -25,3 +25,4 @@ export const CreateJournalSchema = JournalSchema.omit({
 })
 
 export type JournalDTO = z.infer<typeof JournalSchema>;
+export type CreateJournalDTO = z.infer<typeof CreateJournalSchema>

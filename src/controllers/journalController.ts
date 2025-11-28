@@ -5,18 +5,18 @@ import { AppError } from "@/lib/errors";
 import { successResponse, errorResponse } from "@/lib/response";
 import { journalService } from "@/services/journalService";
 import { validateBody } from "@/lib/validate";
-import { JournalSchema } from "@/schemas/journal";
+import { CreateJournalSchema } from "@/schemas/journal";
+import { withAuth } from "@/lib/withAuth";
 
-export const createJournalController = async (req: NextRequest) => {
+export const createJournalController = withAuth(async (req, user) => {
   try {
     const token = req.cookies.get("token")?.value || "";
     if (!token) throw new AppError("Unauthorized", 401);
 
-    const userId = (req as any).user?.id; // if you attach user in middleware
-    // If no middleware yet, decode token here
+    const userId = user?.id; 
 
     const body = await req.json();
-    const payload = validateBody(JournalSchema, body);
+    const payload = validateBody(CreateJournalSchema, body);
 
     const journal = await journalService.create(userId, payload);
 
@@ -27,14 +27,15 @@ export const createJournalController = async (req: NextRequest) => {
     }
     return NextResponse.json(errorResponse(err.message || "Internal Server Error"), { status: 500 });
   }
-};
+});
 
-export const getJournalsController = async (req: NextRequest) => {
+export const getJournalsController = withAuth(async (req, user) => {
   try {
+    console.log({user})
     const token = req.cookies.get("token")?.value || "";
     if (!token) throw new AppError("Unauthorized", 401);
 
-    const userId = (req as any).user?.id;
+    const userId = user?.id;
 
     const journals = await journalService.getAll(userId);
 
@@ -45,15 +46,17 @@ export const getJournalsController = async (req: NextRequest) => {
     }
     return NextResponse.json(errorResponse(err.message || "Internal Server Error"), { status: 500 });
   }
-};
+});
 
-export const updateJournalController = async (req: NextRequest, { params }: any) => {
+export const updateJournalController = withAuth(async (req, user, {params}) => {
   try {
     const token = req.cookies.get("token")?.value || "";
     if (!token) throw new AppError("Unauthorized", 401);
 
-    const userId = (req as any).user?.id;
-    const { id } = params;
+    console.log({params})
+
+    const userId = user?.id;
+    const { id } = await params;
 
     const body = await req.json();
     const journal = await journalService.update(id, userId, body);
@@ -65,14 +68,14 @@ export const updateJournalController = async (req: NextRequest, { params }: any)
     }
     return NextResponse.json(errorResponse(err.message || "Internal Server Error"), { status: 500 });
   }
-};
+});
 
-export const deleteJournalController = async (_req: NextRequest, { params }: any) => {
+export const deleteJournalController = withAuth(async (req, user,  { params }) => {
   try {
-    const token = _req.cookies.get("token")?.value || "";
+    const token = req.cookies.get("token")?.value || "";
     if (!token) throw new AppError("Unauthorized", 401);
 
-    const userId = (_req as any).user?.id;
+    const userId = user?.id;
     const { id } = params;
 
     const journal = await journalService.remove(id, userId);
@@ -84,4 +87,4 @@ export const deleteJournalController = async (_req: NextRequest, { params }: any
     }
     return NextResponse.json(errorResponse(err.message || "Internal Server Error"), { status: 500 });
   }
-};
+});

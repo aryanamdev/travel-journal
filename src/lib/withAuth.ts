@@ -1,10 +1,10 @@
 // src/lib/withAuth.ts
 import jwt from "jsonwebtoken";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 
-type UserPayload = { userId: string };
+type UserPayload = { id: string };
 
 // naive cookie parser (small, zero-deps)
 function parseCookies(cookieHeader: string | null) {
@@ -20,11 +20,17 @@ function parseCookies(cookieHeader: string | null) {
   return map;
 }
 
+export interface RouteContext {
+  params: {
+    [key: string]: string;
+  };
+}
+
 /**
  * Handler signature: (req: Request, user: { userId }) => Promise<Response | NextResponse>
  */
-export function withAuth(handler: (req: Request, user: UserPayload) => Promise<Response | NextResponse>) {
-  return async (req: Request) => {
+export function withAuth(handler: (req: NextRequest, user: UserPayload, context: RouteContext) => Promise<Response | NextResponse>) {
+  return async (req: NextRequest, context: RouteContext) => {
     try {
       // Read cookie header
       const cookieHeader = req.headers.get("cookie");
@@ -43,7 +49,7 @@ export function withAuth(handler: (req: Request, user: UserPayload) => Promise<R
       }
 
       // Call actual handler with authenticated user
-      return await handler(req, { userId: decoded.userId });
+      return await handler(req, decoded, context);
     } catch (err) {
       // Fallback error handling
       return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });

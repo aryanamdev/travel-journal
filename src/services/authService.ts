@@ -6,7 +6,6 @@ import { NotFoundError, UnauthorizedError, BadRequestError, ForbiddenError } fro
 import { RegisterDTO, LoginDTO, VerifyDTO, ViewerDTO } from "@/schemas/auth";
 import { User as UserType, UserTokenData } from "@/types/user";
 import { sendEmail } from "@/helpers/verifyEmail";
-import { connect } from "@/dbConfig/dbConfig";
 
 const JWT_SECRET = String(process.env.JWT_SECRET) || "";
 
