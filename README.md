@@ -173,4 +173,4 @@ Add tests under `tests/` or alongside your modules as needed.
 
 - All auth‑protected routes expect a `token` cookie set by the login endpoint.
 - Map view is powered by Leaflet + React‑Leaflet and uses `entry.location` for markers.
-- The UI is intentionally opinionated toward travel journaling but the API and models are generic enough to adapt for other journaling/time‑capsule use cases.
+- The UI is intentionally opinionated toward travel journaling but the API and models are generic enough to adapt for other journaling use cases.
